@@ -6,8 +6,8 @@ import Divers
 import GAN
 
 #Variables
-CheminDataset = 'Dataset_pixellisation_all\Dataset_pixellisation_8_8'#'data_trie'#'data_redim_32x32'
-nbrIMG = 21401
+CheminDataset = 'data_trie'#'Dataset_pixellisation_all\Dataset_pixellisation_8_8'#'data_trie'#'data_redim_32x32'
+nbrIMG = 501
 
 #Les images peuvent être affichées entre 0 et 1 et aussi 0 et 255
 
@@ -30,7 +30,7 @@ DatasetCalib = DatasetCalib / 255.
 #for i in range(nbrIMG):
 #    Divers.sauvegardeImg("data_redim_32x32/"+str(i),Dataset_redimensionne[i])
 
-GAN.entrainement(500,21400,DatasetCalib,False,0,50)
+GAN.entrainement(10000,500,DatasetCalib,False,0,50)
     #GAN.entrainement(50000,200,DatasetCalib,False,0,10)
 
 #GAN.afficheMeilleurImageGAN(2000,10,10,"test")

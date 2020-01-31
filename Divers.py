@@ -84,9 +84,9 @@ def imageMatplot(nbrColonne,nbrLigne,Images):
 def SauvegardePerfGAN(epochs,dLossRealArr,dLossFakeArr,gLossLogsArr,chemin):
 
     plt.figure(1)
-    plt.plot(dLossRealArr[:, 0], dLossRealArr[:, 1], label="Discriminator Loss - Real")
-    #plt.plot(dLossFakeArr[:, 0], dLossFakeArr[:, 1], label="Discriminator Loss - Fake")
-    plt.plot(gLossLogsArr[:, 0], gLossLogsArr[:, 1], label="Generator Loss")
+    plt.plot(dLossRealArr[:, 0], dLossRealArr[:, 1], label="Discriminator")
+    plt.plot(dLossFakeArr[:, 0], dLossFakeArr[:, 1], label="GAN")
+    plt.plot(gLossLogsArr[:, 0], gLossLogsArr[:, 1], label="Generator only")
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()

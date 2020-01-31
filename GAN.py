@@ -14,8 +14,8 @@ import copy
 
 def DCGAN(sample_size,dataset):
     # generator
-    #g = generator_model(sample_size, 0.2)
-    g = generatorV1_model(sample_size, 0.2)
+    g = generator_model(sample_size, 0.2)
+    #g = generatorV1_model(sample_size, 0.2)
     # discriminator
     d = discriminator_model(image_shape=(dataset.shape[1],dataset.shape[2],dataset.shape[3]))
     d.trainable = False
@@ -23,7 +23,7 @@ def DCGAN(sample_size,dataset):
     gan = Sequential([g, d])
     
     sgd=SGD()
-    gan.compile(optimizer=Adam(lr=0.0001, beta_1=0.5), loss='binary_crossentropy',metrics=['mean_absolute_percentage_error'])
+    gan.compile(optimizer=Adam(lr=0.0001, beta_1=0.5), loss='binary_crossentropy',metrics=['accuracy'])
     return gan, g, d
 
 
@@ -47,7 +47,7 @@ def generatorV1_model(nbrParamEntree=10, leaky_alpha=0.2):
     model.add(Conv2D(3, kernel_size=10, padding="same"))
     model.add(Activation("sigmoid"))
     #model.summary()
-    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['mean_absolute_percentage_error'])#'accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
 #def discriminatorV1_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(64,64,3)):
@@ -63,14 +63,13 @@ def generator_model(nbrParamEntree=10, leaky_alpha=0.2):
     model = Sequential()
     
     # layer1 (None,500)>>(None,128*16*16)
-    model.add(Dense(128 * 32 * 32, activation="sigmoid", input_shape=(nbrParamEntree,)))
+    model.add(Dense(64*64*3, activation="sigmoid", input_shape=(nbrParamEntree,)))
     
     # (None,16*16*128)>>(None,16,16,128)
-    model.add(Reshape((32, 32, 128)))
+    model.add(Reshape((64, 64, 3)))
     
     # (None,16,16,128)>>(None,32,32,256)
-    model.add(UpSampling2D())
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
+    model.add(Conv2D(64, kernel_size=2, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(Activation("relu"))
     #(None,32,32,256)>>(None,32,32,256)
@@ -79,65 +78,37 @@ def generator_model(nbrParamEntree=10, leaky_alpha=0.2):
     #model.add(UpSampling2D())
     
     # (None,32,32,256)>>(None,32,32,256)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
+    model.add(Conv2D(64, kernel_size=4, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(Activation("relu"))
 
     # (None,32,32,256)>>(None,32,32,128)
-    model.add(Conv2D(128, kernel_size=3, padding="same"))
+    model.add(Conv2D(3, kernel_size=8, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    # (None,32,32,128)>>(None,32,32,128)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    # (None,32,32,128)>>(None,32,32,32)
-    model.add(Conv2D(128, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    # (None,32,32,128)>>(None,32,32,32)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    
-    # (None,32,32,128)>>(None,32,32,3)
-    model.add(Conv2D(3, kernel_size=10, padding="same"))
     model.add(Activation("sigmoid"))
+    
     #model.summary()
-    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['mean_absolute_percentage_error'])#'accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
 def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model = Sequential()
     
     # layer1 (None,64,64,3)>>(None,32,32,32)
-    model.add(Conv2D(128, kernel_size=3, strides=2, input_shape=image_shape, padding="same"))
+    model.add(Conv2D(64, kernel_size=32, strides=2, input_shape=image_shape, padding="same"))
     model.add(LeakyReLU(alpha=leaky_alpha))
-   # model.add(Dropout(dropRate))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(Dropout(dropRate))
     # layer2 (None,32,32,32)>>(None,16,16,64)
-    model.add(Conv2D(128, kernel_size=3, strides=2, padding="same"))
+    model.add(Conv2D(64, kernel_size=8, strides=2, padding="same"))
     # model.add(ZeroPadding2D(padding=((0, 1), (0, 1))))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=leaky_alpha))
     model.add(Dropout(dropRate))
     # (None,16,16,64)>>(None,8,8,128)
-    model.add(Conv2D(128, kernel_size=3, strides=2, padding="same"))
+    model.add(Conv2D(64, kernel_size=4, strides=2, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(dropRate))
-    
-    # (None,8,8,128)>>(None,8,8,256)
-    model.add(Conv2D(256, kernel_size=3, strides=1, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(dropRate))
-    
-        # (None,8,8,256)>>(None,8,8,64)
-    model.add(Conv2D(128, kernel_size=3, strides=1, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(dropRate))
     
 ##    model.add(MaxPooling2D(pool_size=(2, 2)))
 ##    model.add(Dropout(0.25))
@@ -146,17 +117,15 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
 ##    model.add(Dense(64, activation='relu'))
 ##    model.add(BatchNormalization(momentum=0.8))
 ##    model.add(Dropout(dropRate))
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(32, activation='relu'))
 
-    model.add(Dense(128, activation='relu'))
-
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(32, activation='relu'))
 ##    model.add(BatchNormalization(momentum=0.8))
 ##    model.add(Dropout(dropRate))
     model.add(Dense(1, activation='sigmoid'))
     #model.summary()
     sgd=SGD(lr=0.0002)
-    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['mean_absolute_percentage_error'])#'accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
 def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epoch_start,pasEntrainement):
@@ -174,7 +143,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         d.load_weights('d.h5')
 
     dLossReal = []
-    dLossFake = []
+    dLossGAN  = []
     gLossLogs = []
 
     #On init la variable de stockage d'image
@@ -190,6 +159,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
         moyDlossR = 0.0
         moyDlossF = 0.0
+        moyGAN = 0.0
 
 
         for a in range(0,nbrImageEntrainement,pasEntrainement):
@@ -209,20 +179,25 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
             #On entraîne le discriminateur
             d.trainable = True
-            dLossR = d.fit(datasetImg[a:a+pasEntrainement+1], np.ones(pasEntrainement+1),verbose=0)
-            dLossF = d.fit(genImage, np.zeros(pasEntrainement+1),verbose=0)
-            if(dLossR.history['mean_absolute_percentage_error'][0] == 0):
+            dLossR = d.fit(datasetImg[a:a+pasEntrainement+1], np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
+            dLossF = d.fit(genImage, np.zeros(pasEntrainement+1),validation_split=0.2,verbose=0)
+            if(dLossR.history['acc'][0] == 0):
                 moyDlossR = moyDlossR + 0
             else:
-                moyDlossR = moyDlossR + (dLossR.history['mean_absolute_percentage_error'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(dLossF.history['mean_absolute_percentage_error'][0] == 0):
+                moyDlossR = moyDlossR + (dLossR.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(dLossF.history['acc'][0] == 0):
                 moyDlossF = moyDlossF + 0
             else:
-                moyDlossF = moyDlossF + (dLossF.history['mean_absolute_percentage_error'][0]/(nbrImageEntrainement/pasEntrainement))
+                moyDlossF = moyDlossF + (dLossF.history['acc'][0]/(nbrImageEntrainement/pasEntrainement))
             #dLoss = np.add(dLossF, dLossR) #* 0.5
             d.trainable = False
             #On entraîne le generateur
-            gLoss = gan.fit(bruit, np.ones(pasEntrainement+1),verbose=0)
+            gLoss = gan.fit(bruit, np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
+
+            if(gLoss.history['acc'][0] == 0):
+                moyGAN = moyGAN + 0
+            else:
+                moyGAN = moyGAN + (gLoss.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
 
         #On quantifie les résultats du GAN
         #dLossReal.append([e, dLoss[0]])
@@ -231,13 +206,14 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         
         dLossReal.append([e, moyDlossR])#dLossR.history['mean_absolute_percentage_error'][0]])
         #dLossFake.append([e, dLossF.history['mean_absolute_percentage_error'][1]])
+        dLossGAN.append([e,moyGAN])
         gLossLogs.append([e, moyDlossF])#gLoss.history['mean_absolute_percentage_error'][0]])
         
         moyDlossR = 0.0
         moyDlossF = 0.0
 
         dLossRealArr = np.array(dLossReal)
-        #dLossFakeArr = np.array(dLossFake)
+        dLossGANArr  = np.array(dLossGAN)
         gLossLogsArr = np.array(gLossLogs)
 
         #Sauvegarde
@@ -246,7 +222,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         d.save_weights('d.h5')
 
         #On enregistre les perfs du GAN
-        Divers.SauvegardePerfGAN(e,dLossRealArr,0,gLossLogsArr,"Resultat")
+        Divers.SauvegardePerfGAN(e,dLossRealArr,dLossGANArr,gLossLogsArr,"Resultat")
        
 
         imgGenereNonCalib = copy.copy(genImage)
@@ -270,11 +246,11 @@ def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier):
     bruit = np.random.rand(nombreImg+1,10)
 
     #On init la variable de stockage d'image
-    dataset = np.ndarray(shape=(nbrColonne*nbrLigne, 32,32,3),
+    dataset = np.ndarray(shape=(nbrColonne*nbrLigne, 64,64,3),
                      dtype=np.float32)
 
     #On crée le GAN
-    (gan, g, d) = DCGAN()
+    (gan, g, d) = DCGAN(10,dataset)
 
     gan.load_weights('GAN.h5')
     g.load_weights('g.h5')
