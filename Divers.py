@@ -81,12 +81,12 @@ def imageMatplot(nbrColonne,nbrLigne,Images):
 
     return plt
 
-def SauvegardePerfGAN(epochs,dLossRealArr,dLossFakeArr,gLossLogsArr,chemin):
+def SauvegardePerfGAN(epochs,moyaccDiscriTrueImageArray,moyGANArray,moyaccDiscriFalseImageArray,chemin):
 
     plt.figure(1)
-    plt.plot(dLossRealArr[:, 0], dLossRealArr[:, 1], label="Discriminator")
-    plt.plot(dLossFakeArr[:, 0], dLossFakeArr[:, 1], label="GAN")
-    plt.plot(gLossLogsArr[:, 0], gLossLogsArr[:, 1], label="Generator only")
+    plt.plot(moyaccDiscriTrueImageArray[:, 0], moyaccDiscriTrueImageArray[:, 1], label="Discriminateur vraies images")
+    plt.plot(moyGANArray[:, 0], moyGANArray[:, 1], label="GAN")
+    plt.plot(moyaccDiscriFalseImageArray[:, 0], moyaccDiscriFalseImageArray[:, 1], label="Discriminateur fausses images")
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()

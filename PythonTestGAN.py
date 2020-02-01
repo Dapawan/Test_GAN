@@ -30,8 +30,7 @@ DatasetCalib = DatasetCalib / 255.
 #for i in range(nbrIMG):
 #    Divers.sauvegardeImg("data_redim_32x32/"+str(i),Dataset_redimensionne[i])
 
-GAN.entrainement(10000,500,DatasetCalib,False,0,50)
-    #GAN.entrainement(50000,200,DatasetCalib,False,0,10)
+GAN.entrainement(10000,500,DatasetCalib,True,0,50)
 
 #GAN.afficheMeilleurImageGAN(2000,10,10,"test")
 
