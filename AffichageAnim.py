@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageFont, ImageDraw, ImageTk 
 
 #fenetre = Tk()
-TAILLE = [64,64]#[200,200]
+TAILLE = [200,200]
 #curseurArray = np.zeros(11)#np.ndarray(shape=(11,1))
 Valeur = np.ndarray(shape=(2,10))
 
@@ -48,51 +48,37 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import time
 
-def generator_model(latent_dim=100, leaky_alpha=0.2):
+def generator_model(nbrParamEntree=10, dropRate=0.3,latent_dim=100, leaky_alpha=0.2):
     model = Sequential()
     
-    # layer1 (None,500)>>(None,128*16*16)
-    model.add(Dense(128 * 16 * 16, activation="sigmoid", input_shape=(10,)))
-    
+    model.add(Dense(32, input_shape=(nbrParamEntree,)))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+
+    model.add(Dense(64*64*3))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+
+
     # (None,16*16*128)>>(None,16,16,128)
-    model.add(Reshape((16, 16, 128)))
+    model.add(Reshape((64, 64, 3)))
+
     
     # (None,16,16,128)>>(None,32,32,256)
-    model.add(UpSampling2D())
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
+    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
+    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
     #(None,32,32,256)>>(None,32,32,256)
-        
-        
-    #model.add(UpSampling2D())
-    
-    # (None,32,32,256)>>(None,32,32,256)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
+    model.add(Conv2D(3, kernel_size=(2,2), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    # (None,32,32,256)>>(None,32,32,128)
-    model.add(Conv2D(128, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    # (None,32,32,128)>>(None,32,32,128)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    # (None,32,32,128)>>(None,32,32,32)
-    model.add(Conv2D(128, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    # (None,32,32,128)>>(None,32,32,32)
-    model.add(Conv2D(256, kernel_size=3, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-    
-    # (None,32,32,128)>>(None,32,32,3)
-    model.add(Conv2D(3, kernel_size=3, padding="same"))
-    model.add(Activation("sigmoid"))
+    model.add(Activation("sigmoid"))   
     #model.summary()
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model

@@ -88,7 +88,7 @@ def SauvegardePerfGAN(epochs,moyaccDiscriTrueImageArray,moyGANArray,moyaccDiscri
     plt.plot(moyGANArray[:, 0], moyGANArray[:, 1], label="GAN")
     plt.plot(moyaccDiscriFalseImageArray[:, 0], moyaccDiscriFalseImageArray[:, 1], label="Discriminateur fausses images")
     plt.xlabel('Epochs')
-    plt.ylabel('Loss')
+    plt.ylabel('Acc/Loss')
     plt.legend()
     plt.title('GAN')
     plt.grid(True)

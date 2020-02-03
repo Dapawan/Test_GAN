@@ -14,10 +14,18 @@ import copy
 
 def DCGAN(sample_size,dataset):
     # generator
-    g = generator_model(sample_size, 0.2)
+    g_1 = generator_model(sample_size, 0.2)
+    #On load le generator_1
+    g_1.load_weights('g.h5')
+    g_2 = generator_model_part1(sample_size, 0.2)
+    #On ajoute la seconde partie
+    g = Sequential([g_1,g_2])
+
+    g.summary()
     #g = generatorV1_model(sample_size, 0.2)
     # discriminator
     d = discriminator_model(image_shape=(dataset.shape[1],dataset.shape[2],dataset.shape[3]))
+    d.load_weights('d.h5')
     d.trainable = False
     # GAN
     gan = Sequential([g, d])
@@ -57,43 +65,63 @@ def generatorV1_model(nbrParamEntree=10, leaky_alpha=0.2):
 #    model.add(Conv2D(16, kernel_size=3, strides=2, input_shape=image_shape, padding="same"))
 #    model.add(LeakyReLU(alpha=leaky_alpha))
 
-
-
-def generator_model(nbrParamEntree=10, leaky_alpha=0.2):
+def generator_model_part1(dropRate=0.3, leaky_alpha=0.2):
     model = Sequential()
-    
-    # layer1 (None,500)>>(None,128*16*16)
-    model.add(Dense(64*64*3, activation="relu", input_shape=(nbrParamEntree,)))
-    model.add(BatchNormalization(momentum=0.8))
-    # (None,16*16*128)>>(None,16,16,128)
-    model.add(Reshape((64, 64, 3)))
-    
+
+
     # (None,16,16,128)>>(None,32,32,256)
+    model.add(Conv2D(64, kernel_size=(2,2), padding="same",input_shape=(64,64,3)))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
     model.add(Conv2D(64, kernel_size=(2,2), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
     #(None,32,32,256)>>(None,32,32,256)
-    model.add(Conv2D(64, kernel_size=(3,3), padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))    
-        
-    #model.add(UpSampling2D())
-    
-    # (None,32,32,256)>>(None,32,32,256)
-    model.add(Conv2D(64, kernel_size=(4,4), padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    model.add(Conv2D(32, kernel_size=(2,2), padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    # (None,32,32,256)>>(None,32,32,128)
     model.add(Conv2D(3, kernel_size=(2,2), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("sigmoid"))
+    model.add(Activation("sigmoid"))    
     
-    #model.summary()
+    model.summary()
+    
+    
+    model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
+    return model
+
+
+def generator_model(nbrParamEntree=10, dropRate=0.3, leaky_alpha=0.2):
+    model = Sequential()
+    
+    model.add(Dense(64*64*3, input_shape=(nbrParamEntree,)))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+
+    # (None,16*16*128)>>(None,16,16,128)
+    model.add(Reshape((64, 64, 3)))
+
+    
+    # (None,16,16,128)>>(None,32,32,256)
+    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
+    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=leaky_alpha))
+    model.add(Dropout(dropRate))
+
+    #(None,32,32,256)>>(None,32,32,256)
+    model.add(Conv2D(3, kernel_size=(2,2), padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(Activation("sigmoid"))    
+    
+    model.summary()
+    
+    
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
@@ -101,39 +129,25 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model = Sequential()
     
     # layer1 (None,64,64,3)>>(None,32,32,32)
-    model.add(Conv2D(64, kernel_size=32, strides=2, input_shape=image_shape, padding="same"))
+    model.add(Conv2D(128, kernel_size=2, strides=2, input_shape=image_shape, padding="same"))
     model.add(LeakyReLU(alpha=leaky_alpha))
     model.add(BatchNormalization(momentum=0.8))
     model.add(Dropout(dropRate))
-    # layer2 (None,32,32,32)>>(None,16,16,64)
-    model.add(Conv2D(64, kernel_size=(8,8), strides=2, padding="same"))
-    # model.add(ZeroPadding2D(padding=((0, 1), (0, 1))))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-    model.add(Dropout(dropRate))
-    # (None,16,16,64)>>(None,8,8,128)
-    model.add(Conv2D(64, kernel_size=(4,4), strides=2, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-
-    model.add(Conv2D(32, kernel_size=(2,2), strides=2, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
     
-##    model.add(MaxPooling2D(pool_size=(2, 2)))
-##    model.add(Dropout(0.25))
-    # (None,8,8,64)
-    model.add(Flatten())
-##    model.add(Dense(64, activation='relu'))
-##    model.add(BatchNormalization(momentum=0.8))
-##    model.add(Dropout(dropRate))
-    model.add(Dense(32, activation='relu'))
+    model.add(Conv2D(128, kernel_size=(2,2), strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(dropRate))
 
-    model.add(Dense(32, activation='relu'))
-##    model.add(BatchNormalization(momentum=0.8))
-##    model.add(Dropout(dropRate))
+    model.add(Conv2D(128, kernel_size=(2,2), strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(dropRate))
+
+    model.add(Flatten())
+    model.add(Dense(64, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
-    #model.summary()
+    model.summary()
     sgd=SGD(lr=0.0002)
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
@@ -153,8 +167,12 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         d.load_weights('d.h5')
 
     moyaccDiscriTrueImageArray = []
-    moyGANArray  = []
+    moyAccGANArray  = []
     moyaccDiscriFalseImageArray = []
+
+    moyLossDiscriTrueImageArray = []
+    moyLossGANArray  = []
+    moyLossDiscriFalseImageArray = []
 
     #On init la variable de stockage d'image
     imgGenereNonCalib = np.ndarray(shape=(50, datasetImg.shape[1],datasetImg.shape[2],3),
@@ -169,7 +187,11 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
         moyaccDiscriTrueImage = 0.0
         moyaccDiscriFalseImage = 0.0
-        moyGAN = 0.0
+        moyAccGAN = 0.0
+
+        moyLossDiscriTrueImage = 0.0
+        moyLossDiscriFalseImage = 0.0
+        moyLossGAN = 0.0
 
 
         for a in range(0,nbrImageEntrainement,pasEntrainement):
@@ -189,41 +211,70 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
             #On entraîne le discriminateur
             d.trainable = True
-            accDiscriTrueImage = d.fit(datasetImg[a:a+pasEntrainement+1], np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
-            accDiscriFalseImage = d.fit(genImage, np.zeros(pasEntrainement+1),validation_split=0.2,verbose=0)
+            discriTrueImage = d.fit(datasetImg[a:a+pasEntrainement+1], np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
+            discriFalseImage = d.fit(genImage, np.zeros(pasEntrainement+1),validation_split=0.2,verbose=0)
             d.trainable = False
             #On entraîne le generateur
-            gLoss = gan.fit(bruit, np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
+            ganHistoryImg = gan.fit(bruit, np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
             
-            if(accDiscriTrueImage.history['acc'][0] == 0):
+            if(discriTrueImage.history['val_acc'][0] == 0):
                 moyaccDiscriTrueImage = moyaccDiscriTrueImage + 0
             else:
-                moyaccDiscriTrueImage = moyaccDiscriTrueImage + (accDiscriTrueImage.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(accDiscriFalseImage.history['acc'][0] == 0):
+                moyaccDiscriTrueImage = moyaccDiscriTrueImage + (discriTrueImage.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(discriFalseImage.history['val_acc'][0] == 0):
                 moyaccDiscriFalseImage = moyaccDiscriFalseImage + 0
             else:
-                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (accDiscriFalseImage.history['acc'][0]/(nbrImageEntrainement/pasEntrainement))
-            if(gLoss.history['acc'][0] == 0):
-                moyGAN = moyGAN + 0
+                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(ganHistoryImg.history['val_acc'][0] == 0):
+                moyAccGAN = moyAccGAN + 0
             else:
-                moyGAN = moyGAN + (gLoss.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+                moyAccGAN = moyAccGAN + (ganHistoryImg.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
         
+        
+            #Pareil pour le loss
+
+            if(discriTrueImage.history['val_loss'][0] == 0):
+                moyLossDiscriTrueImage = moyLossDiscriTrueImage + 0
+            else:
+                moyLossDiscriTrueImage = moyLossDiscriTrueImage + (discriTrueImage.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(discriFalseImage.history['val_loss'][0] == 0):
+                moyLossDiscriFalseImage = moyLossDiscriFalseImage + 0
+            else:
+                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(ganHistoryImg.history['val_loss'][0] == 0):
+                moyLossGAN = moyLossGAN + 0
+            else:
+                moyLossGAN = moyLossGAN + (ganHistoryImg.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+        
+        
+        #On fait la moyenne de l'acc
         moyaccDiscriTrueImageArray.append([e, moyaccDiscriTrueImage])
-        moyGANArray.append([e,moyGAN])
+        moyAccGANArray.append([e,moyAccGAN])
         moyaccDiscriFalseImageArray.append([e, moyaccDiscriFalseImage])
+        #Pareil pour le loss
+        moyLossDiscriTrueImageArray.append([e, moyLossDiscriTrueImage])
+        moyLossGANArray.append([e,moyLossGAN])
+        moyLossDiscriFalseImageArray.append([e, moyLossDiscriFalseImage])
+
 
         #Sauvegarde
         gan.save_weights('GAN.h5')
         g.save_weights('g.h5')
         d.save_weights('d.h5')
 
-        #On enregistre les perfs du GAN
-        Divers.SauvegardePerfGAN(e,np.array(moyaccDiscriTrueImageArray),np.array(moyGANArray),np.array(moyaccDiscriFalseImageArray),"Resultat")
+        #On enregistre les perfs du GAN acc
+        Divers.SauvegardePerfGAN(e,np.array(moyaccDiscriTrueImageArray),np.array(moyAccGANArray),np.array(moyaccDiscriFalseImageArray),"AccGAN")
+
+        #On enregistre les perfs du GAN loss
+        Divers.SauvegardePerfGAN(e,np.array(moyLossDiscriTrueImageArray),np.array(moyLossGANArray),np.array(moyLossDiscriFalseImageArray),"LossGAN")
        
         #On reset les vars
         moyaccDiscriTrueImage = 0.0
         moyaccDiscriFalseImage = 0.0
-        moyGAN = 0.0       
+        moyAccGAN = 0.0      
+        moyLossDiscriFalseImage = 0.0
+        moyLossDiscriTrueImage = 0.0
+        moyLossGAN = 0.0 
 
         imgGenereNonCalib = copy.copy(genImage)
         imgGenereNonCalib = imgGenereNonCalib * 255.
