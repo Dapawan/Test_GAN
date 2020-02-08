@@ -32,7 +32,7 @@ DatasetCalib = Divers.CalibrationValeurPixelDataset(DatasetCalib)
 #for i in range(nbrIMG):
 #    Divers.sauvegardeImg("data_redim_32x32/"+str(i),Dataset_redimensionne[i])
 
-GAN.entrainement(10000,1000,DatasetCalib,False,0,100)
+GAN.entrainement(10000,1000,DatasetCalib,False,0,100,20,5,2)
 
 #GAN.afficheMeilleurImageGAN(2000,20,30,"test")
 

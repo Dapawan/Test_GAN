@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import copy
 
 
-def DCGAN(sample_size,dataset):
+def DCGAN(input_gen,dataset):
     # generator
     #g_1 = generator_model(sample_size, 0.2)
     #On load le generator_1
@@ -22,7 +22,7 @@ def DCGAN(sample_size,dataset):
     #g = Sequential([g_1,g_2])
 
     #g.summary()
-    g = generatorV1_model(sample_size, 0.2)
+    g = generatorV1_model(input_gen, 0.2)
     # discriminator
     d = discriminator_model(image_shape=(dataset.shape[1],dataset.shape[2],dataset.shape[3]))
     #d.load_weights('d.h5')
@@ -35,10 +35,10 @@ def DCGAN(sample_size,dataset):
     return gan, g, d
 
 
-def generatorV1_model(nbrParamEntree=20, leaky_alpha=0.2,dropRate=0.3):
+def generatorV1_model(input_gen=20, leaky_alpha=0.2,dropRate=0.3):
     model = Sequential()
 
-    model.add(Dense(input_dim=20, output_dim=2048))
+    model.add(Dense(input_dim=input_gen, output_dim=2048))
     model.add(LeakyReLU(alpha=0.2))
     model.add(Dense(32 * 8 * 8))
     #model.add(Dropout(dropRate))
@@ -172,9 +172,9 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
-def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epoch_start,pasEntrainement):
+def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epoch_start,pasEntrainement,input_gen,nbrColImgGen,nbrLigneColImgGen):
     #On crée le GAN
-    (gan, g, d) = DCGAN(20,datasetImg)
+    (gan, g, d) = DCGAN(input_gen,datasetImg)
 
     #On doit entraîner un peu le discriminateur
     d.trainable = True
@@ -185,6 +185,9 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         gan.load_weights('GAN.h5')
         g.load_weights('g.h5')
         d.load_weights('d.h5')
+
+    #On se prépare un vecteur de bruit fixe pour pouvoir voir l'évolution de ce vecteur
+    bruitFixe = np.random.rand(nbrColImgGen*nbrLigneColImgGen,input_gen)
 
     moyaccDiscriTrueImageArray = []
     moyAccGANArray  = []
@@ -218,7 +221,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
             print("Epochs " + str(e+1) + "/" + str(epochs) + " image : " + str(a+1) + "/" + str(nbrImageEntrainement), end="\r")
 
-            bruit = np.random.rand(pasEntrainement+1,20)
+            bruit = np.random.rand(pasEntrainement+1,input_gen)
             #On génère l'image à partir du bruit
             genImage = g.predict(bruit)
 
@@ -302,7 +305,14 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
 
         #On enregistre l'image générée
-        Divers.SauvegardeImageMatplot(5,2,imgGenerePrAffichage,"Resultat/ImageGenerees/epochs_" + str(e) + ".png")
+        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/epochs_" + str(e) + ".png")
+        #On enregistre les images générées avec le bruit fixe
+        
+        #On génère l'image à partir du bruit
+        genImage = g.predict(bruitFixe)
+        imgGenereNonCalib = copy.copy(genImage)
+        imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
+        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/bruitFixe/epochs_" + str(e) + ".png")
 
         #imgGenereNonCalib = imgGenereNonCalib.astype(np.float32)
 
