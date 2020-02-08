@@ -198,7 +198,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
     moyLossDiscriFalseImageArray = []
 
     #On init la variable de stockage d'image
-    imgGenereNonCalib = np.ndarray(shape=(50, datasetImg.shape[1],datasetImg.shape[2],3),
+    imgGenereNonCalib = np.ndarray(shape=(nbrColImgGen*nbrLigneColImgGen, datasetImg.shape[1],datasetImg.shape[2],3),
                      dtype=np.float32)
 
     genImage = []
@@ -224,9 +224,6 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
             bruit = np.random.rand(pasEntrainement+1,input_gen)
             #On génère l'image à partir du bruit
             genImage = g.predict(bruit)
-
-            if(a < 50):
-                imgGenereNonCalib = copy.copy(genImage)
 
             #On enregistre les 2 dernière images générées
             #if(a >= nbrImageEntrainement - 2):
@@ -305,30 +302,30 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
 
         #On enregistre l'image générée
-        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/epochs_" + str(e) + ".png")
+        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/epochs_" + str(e+epoch_start) + ".png")
         #On enregistre les images générées avec le bruit fixe
         
         #On génère l'image à partir du bruit
         genImage = g.predict(bruitFixe)
         imgGenereNonCalib = copy.copy(genImage)
         imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
-        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/bruitFixe/epochs_" + str(e) + ".png")
+        Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/bruitFixe/epochs_" + str(e+epoch_start) + ".png")
 
         #imgGenereNonCalib = imgGenereNonCalib.astype(np.float32)
 
 
 
 
-def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier):
+def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier,input_gen,pourcentage_reussite):
 
-    bruit = np.random.rand(nombreImg+1,20)
+    bruit = np.random.rand(nombreImg+1,input_gen)
 
     #On init la variable de stockage d'image
     dataset = np.ndarray(shape=(nbrColonne*nbrLigne, 64,64,3),
                      dtype=np.float32)
 
     #On crée le GAN
-    (gan, g, d) = DCGAN(20,dataset)
+    (gan, g, d) = DCGAN(input_gen,dataset)
 
     gan.load_weights('GAN.h5')
     g.load_weights('g.h5')
@@ -342,13 +339,12 @@ def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier):
     while(i < ((nbrColonne*nbrLigne)-2) | index < nombreImg):
         print("Images trouvés : " + str(i) + " / " + str(nbrColonne*nbrLigne) + "   Image parcourue : " + str(index) + " / " + str(nombreImg), end="\r")
         
-        if pourcentageReussite[index] > 0.01:
+        if pourcentageReussite[index] > pourcentage_reussite:
             if i < (nbrColonne*nbrLigne) :
                 dataset[i] = imgListe[index]
             i+=1
         index+=1
-    dataset = dataset * 255.
-    dataset = dataset.astype(np.uint8)
+    dataset = Divers.UndoCalibrationValeurPixelDataset(dataset)
 
     Divers.SauvegardeImageMatplot(nbrColonne,nbrLigne,dataset,"Resultat/"+nomFichier)
 

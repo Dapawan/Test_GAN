@@ -34,7 +34,7 @@ DatasetCalib = Divers.CalibrationValeurPixelDataset(DatasetCalib)
 
 GAN.entrainement(10000,1000,DatasetCalib,False,0,100,20,5,2)
 
-#GAN.afficheMeilleurImageGAN(2000,20,30,"test")
+#GAN.afficheMeilleurImageGAN(2000,20,30,"test",20,0.7)
 
 
 #Divers.pixeliseAllImage('Dataset_pixellisation_all\Dataset_pixellisation_8_8',Dataset,8,8)
