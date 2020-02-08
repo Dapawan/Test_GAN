@@ -48,37 +48,28 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import time
 
-def generator_model(nbrParamEntree=10, dropRate=0.3,latent_dim=100, leaky_alpha=0.2):
+def generator_model(nbrParamEntree=20, dropRate=0.3,latent_dim=100, leaky_alpha=0.2):
     model = Sequential()
     
-    model.add(Dense(32, input_shape=(nbrParamEntree,)))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-
-    model.add(Dense(64*64*3))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-
+    model.add(Dense(32*32*12, activation="relu", input_shape=(nbrParamEntree,)))
 
     # (None,16*16*128)>>(None,16,16,128)
-    model.add(Reshape((64, 64, 3)))
+    model.add(Reshape((32, 32, 12)))
+    model.add(UpSampling2D(interpolation='bilinear',size=(2,2)))
 
-    
-    # (None,16,16,128)>>(None,32,32,256)
-    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
+    model.add(Conv2D(128, kernel_size=2, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-    model.add(Dropout(dropRate))
+    model.add(Activation("relu"))
+    #model.add(Dropout(dropRate))
 
-    model.add(Conv2D(128, kernel_size=(2,2), padding="same"))
+    model.add(Conv2D(128, kernel_size=(1,1), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-    model.add(Dropout(dropRate))
+    model.add(Activation("relu"))
+    #model.add(Dropout(dropRate))
 
-    #(None,32,32,256)>>(None,32,32,256)
-    model.add(Conv2D(3, kernel_size=(2,2), padding="same"))
+    model.add(Conv2D(3, kernel_size=(1,1), padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("sigmoid"))   
+    model.add(Activation("sigmoid"))  
     #model.summary()
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
@@ -113,7 +104,7 @@ class Afficheur(Thread):
             checkValeur()
             print(Valeur)
 
-            noise = np.random.normal(0, 1, (2, 10,))
+            noise = np.random.normal(0, 1, (2, 20,))
             #print(noise.shape)
             
             img = generator.predict(noise)
@@ -143,7 +134,7 @@ cadre,curseurArray = init(fenetre)
 ### Lancement des threads
 #thread_1.start()
 
-noise = np.random.normal(0, 1, (2, 10))
+noise = np.random.normal(0, 1, (2, 20))
 
 #img = generator.predict(noise)
 ##plt.imshow(noise)
@@ -157,7 +148,7 @@ noise = np.random.normal(0, 1, (2, 10))
 ##photo = ImageTk.PhotoImage(im,size=64*64)
 ##item = cadre.create_image(32,32,image =photo)
 
-generator = generator_model(10,0.2)
+generator = generator_model(20,0.2)
 generator.load_weights('g.h5')
 #generator.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
 

@@ -14,18 +14,18 @@ import copy
 
 def DCGAN(sample_size,dataset):
     # generator
-    g_1 = generator_model(sample_size, 0.2)
+    #g_1 = generator_model(sample_size, 0.2)
     #On load le generator_1
-    g_1.load_weights('g.h5')
-    g_2 = generator_model_part1(sample_size, 0.2)
+    #g_1.load_weights('g.h5')
+    #g_2 = generator_model_part1(sample_size, 0.2)
     #On ajoute la seconde partie
-    g = Sequential([g_1,g_2])
+    #g = Sequential([g_1,g_2])
 
-    g.summary()
-    #g = generatorV1_model(sample_size, 0.2)
+    #g.summary()
+    g = generatorV1_model(sample_size, 0.2)
     # discriminator
     d = discriminator_model(image_shape=(dataset.shape[1],dataset.shape[2],dataset.shape[3]))
-    d.load_weights('d.h5')
+    #d.load_weights('d.h5')
     d.trainable = False
     # GAN
     gan = Sequential([g, d])
@@ -35,26 +35,39 @@ def DCGAN(sample_size,dataset):
     return gan, g, d
 
 
-def generatorV1_model(nbrParamEntree=10, leaky_alpha=0.2):
+def generatorV1_model(nbrParamEntree=20, leaky_alpha=0.2,dropRate=0.3):
     model = Sequential()
 
-    # layer1 (None,500)>>(None,128*16*16)
-    model.add(Dense(128 * 64 * 64, activation="sigmoid", input_shape=(nbrParamEntree,)))
-
-    # (None,16*16*128)>>(None,16,16,128)
-    model.add(Reshape((64, 64, 128)))
-
-    model.add(Conv2D(16, kernel_size=3, padding="same"))
+    model.add(Dense(input_dim=20, output_dim=2048))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dense(32 * 8 * 8))
+    #model.add(Dropout(dropRate))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
-
-    model.add(Conv2D(16, kernel_size=3, padding="same"))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Reshape((8, 8, 32), input_shape=(32 * 8 * 8,)))
+    #model.add(UpSampling2D(size=(2, 2)))
+    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(128, kernel_size=(4,4), padding='same', strides=(1,1)))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(BatchNormalization(momentum=0.8))
+    #model.add(UpSampling2D(size=(2, 2)))
+    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(128, kernel_size=(2,2), padding='same', strides=(1,1)))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(BatchNormalization(momentum=0.8))
+    #model.add(UpSampling2D(size=(2, 2)))
+    
+    model.add(Conv2DTranspose(32, kernel_size=(2,2), strides=(2,2),padding='same'))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(3, kernel_size=(4,4), padding='same', activation='tanh', strides=(1,1)))
+    #model.add(LeakyReLU(alpha=0.2))  
 
-    model.add(Conv2D(3, kernel_size=10, padding="same"))
-    model.add(Activation("sigmoid"))
-    #model.summary()
+    model.summary()
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
     return model
 
@@ -129,24 +142,31 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model = Sequential()
     
     # layer1 (None,64,64,3)>>(None,32,32,32)
-    model.add(Conv2D(128, kernel_size=2, strides=2, input_shape=image_shape, padding="same"))
-    model.add(LeakyReLU(alpha=leaky_alpha))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(Dropout(dropRate))
-    
-    model.add(Conv2D(128, kernel_size=(2,2), strides=2, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
+    model.add(Conv2D(256, (4, 4),
+               padding='same',
+               input_shape=(64, 64, 3), strides=(1,1)))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(dropRate))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    #model.add(BatchNormalization(momentum=0.8))
 
-    model.add(Conv2D(128, kernel_size=(2,2), strides=2, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
+    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dropout(dropRate))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    #model.add(BatchNormalization(momentum=0.8))
+
+    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    #model.add(BatchNormalization(momentum=0.8))
 
     model.add(Flatten())
-    model.add(Dense(64, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(256))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(BatchNormalization(momentum=0.8))
+    #model.add(Dropout(dropRate))
+
+    model.add(Dense(1))
+    model.add(Activation('sigmoid'))
     model.summary()
     sgd=SGD(lr=0.0002)
     model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.0001, beta_1=0.5), metrics=['accuracy'])
@@ -154,7 +174,7 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
 
 def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epoch_start,pasEntrainement):
     #On crée le GAN
-    (gan, g, d) = DCGAN(10,datasetImg)
+    (gan, g, d) = DCGAN(20,datasetImg)
 
     #On doit entraîner un peu le discriminateur
     d.trainable = True
@@ -198,7 +218,7 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
             print("Epochs " + str(e+1) + "/" + str(epochs) + " image : " + str(a+1) + "/" + str(nbrImageEntrainement), end="\r")
 
-            bruit = np.random.rand(pasEntrainement+1,10)
+            bruit = np.random.rand(pasEntrainement+1,20)
             #On génère l'image à partir du bruit
             genImage = g.predict(bruit)
 
@@ -277,27 +297,28 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         moyLossGAN = 0.0 
 
         imgGenereNonCalib = copy.copy(genImage)
-        imgGenereNonCalib = imgGenereNonCalib * 255.
-        imgGenereNonCalib = imgGenereNonCalib.astype(np.uint8)
+        #imgGenereNonCalib = ( (imgGenereNonCalib + 1) * 127.5)
+        #imgGenereNonCalib = imgGenereNonCalib.astype(np.uint8)
+        imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
 
         #On enregistre l'image générée
-        Divers.SauvegardeImageMatplot(5,2,imgGenereNonCalib,"Resultat/ImageGenerees/epochs_" + str(e) + ".png")
+        Divers.SauvegardeImageMatplot(5,2,imgGenerePrAffichage,"Resultat/ImageGenerees/epochs_" + str(e) + ".png")
 
-        imgGenereNonCalib = imgGenereNonCalib.astype(np.float32)
+        #imgGenereNonCalib = imgGenereNonCalib.astype(np.float32)
 
 
 
 
 def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier):
 
-    bruit = np.random.rand(nombreImg+1,10)
+    bruit = np.random.rand(nombreImg+1,20)
 
     #On init la variable de stockage d'image
     dataset = np.ndarray(shape=(nbrColonne*nbrLigne, 64,64,3),
                      dtype=np.float32)
 
     #On crée le GAN
-    (gan, g, d) = DCGAN(10,dataset)
+    (gan, g, d) = DCGAN(20,dataset)
 
     gan.load_weights('GAN.h5')
     g.load_weights('g.h5')
@@ -311,7 +332,7 @@ def afficheMeilleurImageGAN(nombreImg,nbrColonne,nbrLigne,nomFichier):
     while(i < ((nbrColonne*nbrLigne)-2) | index < nombreImg):
         print("Images trouvés : " + str(i) + " / " + str(nbrColonne*nbrLigne) + "   Image parcourue : " + str(index) + " / " + str(nombreImg), end="\r")
         
-        if pourcentageReussite[index] > 0.7:
+        if pourcentageReussite[index] > 0.01:
             if i < (nbrColonne*nbrLigne) :
                 dataset[i] = imgListe[index]
             i+=1

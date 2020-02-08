@@ -26,6 +26,16 @@ def ChargementImages(nbrImg,chemin,largeur,hauteur):
 
     return dataset
 
+def CalibrationValeurPixelDataset(dataset):
+    dataset.astype(np.float32)
+    dataset = ((dataset / 127.5) - 1)
+    return dataset
+
+def UndoCalibrationValeurPixelDataset(dataset):
+    dataset = ((dataset + 1) * 127.5)
+    dataset.astype(np.uint8)
+    return dataset
+
 def redimensionnementImage(nbrImg,chemin,largeur,hauteur):
     
     print("Demarrage du redimensionnement en " + str(largeur) + "*" + str(hauteur))
