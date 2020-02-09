@@ -7,7 +7,7 @@ import GAN
 
 #Variables
 CheminDataset = 'data_trie'#'Dataset_pixellisation_all\Dataset_pixellisation_2_2'#'data_trie'#'data_redim_32x32'
-nbrIMG = 1001
+nbrIMG = 1000
 
 #Les images peuvent être affichées entre 0 et 1 et aussi 0 et 255
 
@@ -32,7 +32,7 @@ DatasetCalib = Divers.CalibrationValeurPixelDataset(DatasetCalib)
 #for i in range(nbrIMG):
 #    Divers.sauvegardeImg("data_redim_32x32/"+str(i),Dataset_redimensionne[i])
 
-GAN.entrainement(10000,1000,DatasetCalib,False,0,100,20,5,2)
+GAN.entrainement(10000,1000,DatasetCalib,False,0,2,20,5,2)
 
 #GAN.afficheMeilleurImageGAN(2000,20,30,"test",20,0.7)
 

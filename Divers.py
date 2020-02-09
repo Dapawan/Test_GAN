@@ -20,20 +20,20 @@ def ChargementImages(nbrImg,chemin,largeur,hauteur):
 
     for i in range(nbrImg):
         dataset[i] = Image.open(cheminListe[i])
-        print("Image " + str(i) + " / " + str(nbrImg), end="\r")
+        print("Image " + str(i+1) + " / " + str(nbrImg), end="\r")
 
     print("Fin du chargement des images")
 
     return dataset
 
 def CalibrationValeurPixelDataset(dataset):
-    dataset.astype(np.float32)
+    dataset = dataset.astype(np.float32)
     dataset = ((dataset / 127.5) - 1)
     return dataset
 
 def UndoCalibrationValeurPixelDataset(dataset):
     dataset = ((dataset + 1) * 127.5)
-    dataset.astype(np.uint8)
+    dataset = dataset.astype(np.uint8)
     return dataset
 
 def redimensionnementImage(nbrImg,chemin,largeur,hauteur):

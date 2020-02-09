@@ -10,6 +10,7 @@ import numpy as np
 import Divers
 import matplotlib.pyplot as plt
 import copy
+import time
 
 
 def DCGAN(input_gen,dataset):
@@ -40,28 +41,28 @@ def generatorV1_model(input_gen=20, leaky_alpha=0.2,dropRate=0.3):
 
     model.add(Dense(input_dim=input_gen, output_dim=2048))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dense(32 * 8 * 8))
+    model.add(Dense(128 * 8 * 8))
     #model.add(Dropout(dropRate))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Reshape((8, 8, 32), input_shape=(32 * 8 * 8,)))
+    model.add(Reshape((8, 8, 128), input_shape=(128 * 8 * 8,)))
     #model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
+    model.add(Conv2DTranspose(128, kernel_size=(4,4), strides=(2,2),padding='same'))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
     model.add(Conv2D(128, kernel_size=(4,4), padding='same', strides=(1,1)))
     model.add(LeakyReLU(alpha=0.2))
     model.add(BatchNormalization(momentum=0.8))
     #model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
+    model.add(Conv2DTranspose(128, kernel_size=(4,4), strides=(2,2),padding='same'))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Conv2D(128, kernel_size=(2,2), padding='same', strides=(1,1)))
+    model.add(Conv2D(128, kernel_size=(3,3), padding='same', strides=(1,1)))
     model.add(LeakyReLU(alpha=0.2))
     model.add(BatchNormalization(momentum=0.8))
     #model.add(UpSampling2D(size=(2, 2)))
     
-    model.add(Conv2DTranspose(32, kernel_size=(2,2), strides=(2,2),padding='same'))
+    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
     model.add(Conv2D(3, kernel_size=(4,4), padding='same', activation='tanh', strides=(1,1)))
@@ -152,6 +153,10 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
     model.add(LeakyReLU(alpha=0.2))
     model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
     #model.add(BatchNormalization(momentum=0.8))
 
     model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
@@ -160,7 +165,9 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     #model.add(BatchNormalization(momentum=0.8))
 
     model.add(Flatten())
-    model.add(Dense(256))
+    model.add(Dense(512))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Dense(512))
     model.add(LeakyReLU(alpha=0.2))
     #model.add(BatchNormalization(momentum=0.8))
     #model.add(Dropout(dropRate))
@@ -216,10 +223,18 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         moyLossDiscriFalseImage = 0.0
         moyLossGAN = 0.0
 
+        #On init le start time
+        start_time = time.clock()
 
         for a in range(0,nbrImageEntrainement,pasEntrainement):
 
-            print("Epochs " + str(e+1) + "/" + str(epochs) + " image : " + str(a+1) + "/" + str(nbrImageEntrainement), end="\r")
+            temps_restant = (float(nbrImageEntrainement - a) * (time.clock() - start_time) )
+            temps_restant_formate = time.strftime('%H:%M:%S', time.gmtime(temps_restant))
+            print("Epochs " + str(e) + "/" + str(epochs) + " image : " + str(a) + "/" + str(nbrImageEntrainement) + 
+            " temps restant = " + temps_restant_formate, end="\r")
+
+            #On démarre le chrono
+            start_time = time.clock()
 
             bruit = np.random.rand(pasEntrainement+1,input_gen)
             #On génère l'image à partir du bruit
@@ -296,6 +311,10 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         moyLossDiscriTrueImage = 0.0
         moyLossGAN = 0.0 
 
+
+        bruit = np.random.rand((nbrColImgGen*nbrLigneColImgGen),input_gen)
+        #On génère l'image à partir du bruit
+        genImage = g.predict(bruit)
         imgGenereNonCalib = copy.copy(genImage)
         #imgGenereNonCalib = ( (imgGenereNonCalib + 1) * 127.5)
         #imgGenereNonCalib = imgGenereNonCalib.astype(np.uint8)
