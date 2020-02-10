@@ -41,30 +41,39 @@ def generatorV1_model(input_gen=20, leaky_alpha=0.2,dropRate=0.3):
 
     model.add(Dense(input_dim=input_gen, output_dim=2048))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dense(128 * 8 * 8))
+    model.add(Dense(32 * 8 * 8))
+    model.add(Dropout(dropRate))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Reshape((8, 8, 32), input_shape=(32 * 8 * 8,)))
+    #model.add(UpSampling2D(size=(2, 2)))
+    model.add(Conv2DTranspose(64, kernel_size=(3,3), strides=(2,2),padding='same'))
+    #model.add(BatchNormalization(momentum=0.8))
     #model.add(Dropout(dropRate))
-    model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Reshape((8, 8, 128), input_shape=(128 * 8 * 8,)))
+    model.add(Conv2D(64, kernel_size=(3,3), padding='same', strides=(1,1)))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    #model.add(BatchNormalization(momentum=0.8))
     #model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2DTranspose(128, kernel_size=(4,4), strides=(2,2),padding='same'))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Conv2D(128, kernel_size=(4,4), padding='same', strides=(1,1)))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(BatchNormalization(momentum=0.8))
-    #model.add(UpSampling2D(size=(2, 2)))
-    model.add(Conv2DTranspose(128, kernel_size=(4,4), strides=(2,2),padding='same'))
-    model.add(BatchNormalization(momentum=0.8))
+    model.add(Conv2DTranspose(128, kernel_size=(3,3), strides=(2,2),padding='same'))
+    #model.add(BatchNormalization(momentum=0.8))
+    #model.add(Dropout(dropRate))
     model.add(LeakyReLU(alpha=0.2))
     model.add(Conv2D(128, kernel_size=(3,3), padding='same', strides=(1,1)))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(BatchNormalization(momentum=0.8))
+    #model.add(Dropout(dropRate))
+    #model.add(BatchNormalization(momentum=0.8))
     #model.add(UpSampling2D(size=(2, 2)))
     
-    model.add(Conv2DTranspose(64, kernel_size=(4,4), strides=(2,2),padding='same'))
-    model.add(BatchNormalization(momentum=0.8))
+    model.add(Conv2DTranspose(256, kernel_size=(4,4), strides=(2,2),padding='same'))
+    #model.add(BatchNormalization(momentum=0.8))
+    #model.add(Dropout(dropRate))
     model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(256, kernel_size=(3,3), padding='same', strides=(1,1)))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    #model.add(BatchNormalization(momentum=0.8))
     model.add(Conv2D(3, kernel_size=(4,4), padding='same', activation='tanh', strides=(1,1)))
     #model.add(LeakyReLU(alpha=0.2))  
 
@@ -143,32 +152,47 @@ def discriminator_model(leaky_alpha=0.2, dropRate=0.3, image_shape=(32,32,3)):
     model = Sequential()
     
     # layer1 (None,64,64,3)>>(None,32,32,32)
-    model.add(Conv2D(256, (4, 4),
+    model.add(Conv2D(64, (3, 3),
                padding='same',
                input_shape=(64, 64, 3), strides=(1,1)))
     model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+
+    model.add(Conv2D(64, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    
+
+    model.add(Conv2D(128, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    model.add(Conv2D(128, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
+    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     #model.add(BatchNormalization(momentum=0.8))
 
-    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
+    #model.add(Dropout(dropRate))
+    model.add(Conv2D(512, (3, 3), strides=(1,1),padding='same'))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    #model.add(BatchNormalization(momentum=0.8))
-
-    model.add(Conv2D(256, (3, 3), strides=(1,1),padding='same'))
-    model.add(LeakyReLU(alpha=0.2))
+    #model.add(Dropout(dropRate))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     #model.add(BatchNormalization(momentum=0.8))
 
     model.add(Flatten())
-    model.add(Dense(512))
+    model.add(Dense(256))
+    model.add(Dropout(dropRate))
     model.add(LeakyReLU(alpha=0.2))
-    model.add(Dense(512))
-    model.add(LeakyReLU(alpha=0.2))
+    
     #model.add(BatchNormalization(momentum=0.8))
     #model.add(Dropout(dropRate))
 
@@ -212,9 +236,6 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
 
     for e in range(epochs):
 
-        #On clear les images saves
-        #genImage.clear()
-
         moyaccDiscriTrueImage = 0.0
         moyaccDiscriFalseImage = 0.0
         moyAccGAN = 0.0
@@ -236,50 +257,46 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
             #On démarre le chrono
             start_time = time.clock()
 
-            bruit = np.random.rand(pasEntrainement+1,input_gen)
+            bruit = np.random.rand(pasEntrainement,input_gen)
             #On génère l'image à partir du bruit
             genImage = g.predict(bruit)
 
-            #On enregistre les 2 dernière images générées
-            #if(a >= nbrImageEntrainement - 2):
-            #    genImage.append(genImage)
-
             #On entraîne le discriminateur
             d.trainable = True
-            discriTrueImage = d.fit(datasetImg[a:a+pasEntrainement+1], np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
-            discriFalseImage = d.fit(genImage, np.zeros(pasEntrainement+1),validation_split=0.2,verbose=0)
+            discriTrueImage = d.fit(datasetImg[a:a+pasEntrainement], np.ones(pasEntrainement),verbose=0)
+            discriFalseImage = d.fit(genImage, np.zeros(pasEntrainement),verbose=0)
             d.trainable = False
             #On entraîne le generateur
-            ganHistoryImg = gan.fit(bruit, np.ones(pasEntrainement+1),validation_split=0.2,verbose=0)
+            ganHistoryImg = gan.fit(bruit, np.ones(pasEntrainement),verbose=0)
             
-            if(discriTrueImage.history['val_acc'][0] == 0):
+            if(discriTrueImage.history['acc'][0] == 0):
                 moyaccDiscriTrueImage = moyaccDiscriTrueImage + 0
             else:
-                moyaccDiscriTrueImage = moyaccDiscriTrueImage + (discriTrueImage.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(discriFalseImage.history['val_acc'][0] == 0):
+                moyaccDiscriTrueImage = moyaccDiscriTrueImage + (discriTrueImage.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(discriFalseImage.history['acc'][0] == 0):
                 moyaccDiscriFalseImage = moyaccDiscriFalseImage + 0
             else:
-                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(ganHistoryImg.history['val_acc'][0] == 0):
+                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(ganHistoryImg.history['acc'][0] == 0):
                 moyAccGAN = moyAccGAN + 0
             else:
-                moyAccGAN = moyAccGAN + (ganHistoryImg.history['val_acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+                moyAccGAN = moyAccGAN + (ganHistoryImg.history['acc'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
         
         
             #Pareil pour le loss
 
-            if(discriTrueImage.history['val_loss'][0] == 0):
+            if(discriTrueImage.history['loss'][0] == 0):
                 moyLossDiscriTrueImage = moyLossDiscriTrueImage + 0
             else:
-                moyLossDiscriTrueImage = moyLossDiscriTrueImage + (discriTrueImage.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(discriFalseImage.history['val_loss'][0] == 0):
+                moyLossDiscriTrueImage = moyLossDiscriTrueImage + (discriTrueImage.history['loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(discriFalseImage.history['loss'][0] == 0):
                 moyLossDiscriFalseImage = moyLossDiscriFalseImage + 0
             else:
-                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
-            if(ganHistoryImg.history['val_loss'][0] == 0):
+                moyaccDiscriFalseImage = moyaccDiscriFalseImage + (discriFalseImage.history['loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+            if(ganHistoryImg.history['loss'][0] == 0):
                 moyLossGAN = moyLossGAN + 0
             else:
-                moyLossGAN = moyLossGAN + (ganHistoryImg.history['val_loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
+                moyLossGAN = moyLossGAN + (ganHistoryImg.history['loss'][0]/(float(nbrImageEntrainement)/float(pasEntrainement)))
         
         
         #On fait la moyenne de l'acc
@@ -316,8 +333,6 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         #On génère l'image à partir du bruit
         genImage = g.predict(bruit)
         imgGenereNonCalib = copy.copy(genImage)
-        #imgGenereNonCalib = ( (imgGenereNonCalib + 1) * 127.5)
-        #imgGenereNonCalib = imgGenereNonCalib.astype(np.uint8)
         imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
 
         #On enregistre l'image générée
@@ -329,8 +344,6 @@ def entrainement(epochs, nbrImageEntrainement, datasetImg, ChargeSauvegarde, epo
         imgGenereNonCalib = copy.copy(genImage)
         imgGenerePrAffichage = Divers.UndoCalibrationValeurPixelDataset(imgGenereNonCalib)
         Divers.SauvegardeImageMatplot(nbrColImgGen,nbrLigneColImgGen,imgGenerePrAffichage,"Resultat/ImageGenerees/bruitFixe/epochs_" + str(e+epoch_start) + ".png")
-
-        #imgGenereNonCalib = imgGenereNonCalib.astype(np.float32)
 
 
 
