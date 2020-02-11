@@ -6,13 +6,13 @@ import Divers
 import GAN
 
 #Variables
-CheminDataset = 'data_trie'#'Dataset_pixellisation_all\Dataset_pixellisation_4_4'#'data_trie'#'data_redim_32x32'
+CheminDataset = 'data_redim/8x8/'#'data_trie'#'Dataset_pixellisation_all\Dataset_pixellisation_4_4'#'data_trie'#'data_redim_32x32'
 nbrIMG = 20000
 
 #Les images peuvent être affichées entre 0 et 1 et aussi 0 et 255
 
 #Chargement des images
-Dataset = Divers.ChargementImages(nbrIMG,CheminDataset,64,64)
+Dataset = Divers.ChargementImages(nbrIMG,CheminDataset,8,8)
 
 #Preparation du dataset pour entrainement
 DatasetCalib = copy.copy(Dataset)
@@ -27,12 +27,12 @@ DatasetCalib = Divers.CalibrationValeurPixelDataset(DatasetCalib)
 #Divers.AffichageImageMatplot(5,5,DatasetCalib[0:25])
 #Divers.SauvegardeImageMatplot(5,5,Dataset[0:25],"Resultat/ImageGenerees/Test")
 
-Dataset_redimensionne = Divers.redimensionnementImage(nbrIMG,CheminDataset,8,8)
+#Dataset_redimensionne = Divers.redimensionnementImage(nbrIMG,CheminDataset,8,8)
 
-for i in range(nbrIMG):
-    Divers.sauvegardeImg("data_redim/8x8/"+str(i),Dataset_redimensionne[i])
+#for i in range(nbrIMG):
+#    Divers.sauvegardeImg("data_redim/8x8/"+str(i),Dataset_redimensionne[i])
 
-#GAN.entrainement(10000,1000,DatasetCalib,False,0,2,20,5,2)
+GAN.entrainement(10000,20000,DatasetCalib,True,14,2,20,5,2,1000)
 
 #GAN.afficheMeilleurImageGAN(2000,20,30,"test",20,0.7)
 
